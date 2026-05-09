@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+{% block title %}CertMate - SSL Certificate Manager{% endblock %}
+{% block content %}
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8"
+         x-data="{ certView: (location.hash === '#client' ? 'client' : 'server') }"
+         x-init="$watch('certView', v => { history.replaceState(null, '', v === 'client' ? '#client' : '#'); if (v === 'client') initClientCerts(); })">
+
+        <!-- Certificate Type Toggle -->
+        <div class="flex items-center space-x-1 mb-6 bg-gray-100 dark:bg-gray-700/50 rounded-lg p-1 w-fit">
+            <button type="button" @click="certView = 'server'"
+                    :class="certView === 'server'
+                        ? 'bg-white dark:bg-gray-800 shadow text-gray-900 dark:text-white'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                    class="px-4 py-2 text-sm font-medium rounded-md transition-all">
+                <i class="fas fa-globe mr-1.5"></i>Server Certificates
+            </button>
+            <button type="button" @click="certView = 'client'"
+                    :class="certView === 'client'
+                        ? 'bg-white dark:bg-gray-800 shadow text-gray-900 dark:text-white'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                    class="px-4 py-2 text-sm font-medium rounded-md transition-all">
+                <i class="fas fa-id-card mr-1.5"></i>Client Certificates
+            </button>
+        </div>
+
+        <!-- SERVER CERTIFICATES -->
+        <div x-show="certView === 'server'">
+        <!-- Create Certificate Form -->
+        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl mb-6 border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+                            <i class="fas fa-plus-circle mr-2 text-primary"></i>
+                            Create New Certificate
+                        </h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">Generate SSL certificates with multiple CA providers and advanced DNS challenge support</p>
+                    </div>
+                    <div class="hidden lg:flex items-center space-x-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                            <i class="fas fa-leaf mr-1"></i>
+                            Let's Encrypt
+                        </span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                            <i class="fas fa-shield-alt mr-1"></i>
+                            DigiCert
+                        </span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                            <i class="fas fa-building mr-1"></i>
+                            Private CA
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-6">
+                <form id="createCertForm" class="space-y-6">
+                    <!-- Main Certificate Configuration -->
+                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="domain" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    <i class="fas fa-globe mr-2 text-blue-500"></i>
+                                    Primary Domain Name
+                                </label>
+                                <input type="text" id="domain" name="domain" 
+                                       class="block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 placeholder-gray-400"
+                                       placeholder="example.com or *.example.com" required>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Supports wildcard domains (*.example.com) and single domains
+                                </p>
+                            </div>
+                            
+                            <!-- SAN Domains (optional) -->
+                            <div>
+                                <label for="san_domains" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    <i class="fas fa-plus-circle mr-2 text-indigo-500"></i>
+                                    Additional Domains (SAN)
+                                    <span class="font-normal text-xs text-gray-500 dark:text-gray-400 ml-1">Optional</span>
+                                </label>
+                                <input type="text" id="san_domains" name="san_domains" 
+                                       class="block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 placeholder-gray-400"
+                                       placeholder="www.example.com, mail.example.com, *.api.example.com">
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Comma-separated list of Subject Alternative Names (SANs) to include in the certificate
+                                </p>
+                            </div>
+                            
+                            <div>
+                                <label for="ca_provider_select" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    <i class="fas fa-certificate mr-2 text-green-500"></i>
+                                    Certificate Authority
+                                </label>
+                                <select id="ca_provider_select" name="ca_provider" 
+                                        class="block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
+                                        onchange="updateCAProviderInfo()">
+                                    <option value="">🔧 Use default from settings</option>
+                                    <option value="letsencrypt">🌿 Let's Encrypt (Free, DV certificates)</option>
+                                    <option value="zerossl">🟡 ZeroSSL (Free, 90-day DV certificates)</option>
+                                    <option value="google">🔵 Google Trust Services (Free, DV certificates)</option>
+                                    <option value="buypass">🟢 BuyPass Go (Free, 180-day DV certificates)</option>
+                                    <option value="digicert">🛡️ DigiCert ACME (Enterprise, DV/OV/EV)</option>
+                                    <option value="sslcom">🔐 SSL.com (Enterprise, DV/OV/EV)</option>
+                                    <option value="private_ca">🏢 Private CA (Internal/Corporate)</option>
+                                </select>
+                                <div id="ca-provider-info" class="mt-2 text-xs text-gray-600 dark:text-gray-400 hidden">
+                                    <!-- CA provider info will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label for="challenge_type_select" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    <i class="fas fa-shield-alt mr-2 text-teal-500"></i>
+                                    Challenge Type
+                                </label>
+                                <select id="challenge_type_select" name="challenge_type"
+                                        class="block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
+                                        onchange="toggleDnsProviderVisibility()">
+                                    <option value="">Use default from settings</option>
+                                    <option value="dns-01">DNS-01 (DNS provider credentials)</option>
+                                    <option value="http-01">HTTP-01 (domain points to this server)</option>
+                                </select>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    HTTP-01 does not require DNS credentials but cannot issue wildcard certificates
+                                </p>
+                            </div>
+
+                            <div id="dns-provider-container">
+                            <div>
+                                <label for="dns_provider_select" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    <i class="fas fa-server mr-2 text-purple-500"></i>
+                                    DNS Provider
+                                </label>
+                                <select id="dns_provider_select" name="dns_provider"
+                                        class="block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
+                                        onchange="updateAccountSelection()">
+                                    <option value="">🔧 Use default from settings</option>
+                                    <option value="cloudflare">☁️ Cloudflare</option>
+                                    <option value="route53">🚀 AWS Route53</option>
+                                    <option value="digitalocean">🌊 DigitalOcean</option>
+                                    <option value="azure">☁️ Azure DNS</option>
+                                    <option value="google">📊 Google Cloud DNS</option>
+                                    <option value="powerdns">⚡ PowerDNS</option>
+                                    <option value="rfc2136">🔧 RFC2136 (Generic)</option>
+                                    <option value="linode">🌐 Akamai Connected Cloud (Linode)</option>
+                                    <option value="vultr">⚡ Vultr</option>
+                                    <option value="hetzner">🇩🇪 Hetzner</option>
+                                    <option value="gandi">🇫🇷 Gandi</option>
+                                    <option value="ovh">🇫🇷 OVH</option>
+                                    <option value="namecheap">💰 Namecheap</option>
+                                    <option value="porkbun">🐷 Porkbun</option>
+                                    <option value="godaddy">🌐 GoDaddy</option>
+                                    <option value="dnsmadeeasy">📡 DNS Made Easy</option>
+                                    <option value="nsone">1️⃣ NS1</option>
+                                    <option value="he-ddns">🌪️ Hurricane Electric</option>
+                                    <option value="dynudns">🔄 Dynu</option>
+                                    <option value="duckdns">🦆 DuckDNS (free subdomain)</option>
+                                </select>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    DNS provider for domain validation challenge
+                                </p>
+                            </div>
+                            
+                            <div id="account-selection-container" style="display: none;">
+                                <label for="account_select" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    <i class="fas fa-user mr-2 text-orange-500"></i>
+                                    Account
+                                </label>
+                                <select id="account_select" name="account_id"
+                                        class="block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200">
+                                    <option value="">🔧 Use default account</option>
+                                </select>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    For multi-account DNS provider setups
+                                </p>
+                            </div>
+                            </div><!-- /dns-provider-container -->
+                        </div>
+                    </div>
+                    
+                    <!-- Advanced Options (Collapsible) -->
+                    <div class="border-t border-gray-200 dark:border-gray-600 pt-6">
+                        <button type="button" onclick="toggleAdvancedOptions()" 
+                                class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary transition-colors duration-200">
+                            <i class="fas fa-cog mr-2"></i>
+                            Advanced Options
+                            <i id="advanced-chevron" class="fas fa-chevron-down ml-2 transform transition-transform duration-200"></i>
+                        </button>
+                        
+                        <div id="advanced-options" class="hidden mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                                        <input type="checkbox" id="wildcard-cert" class="rounded border-gray-300 text-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600">
+                                        <span class="ml-2">
+                                            <i class="fas fa-asterisk mr-1 text-yellow-500"></i>
+                                            Generate wildcard certificate
+                                        </span>
+                                    </label>
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 ml-6">
+                                        Covers *.domain.com and domain.com
+                                    </p>
+                                </div>
+                                
+                                <div>
+                                    <label class="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                                        <input type="checkbox" id="staging-cert" class="rounded border-gray-300 text-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600">
+                                        <span class="ml-2">
+                                            <i class="fas fa-flask mr-1 text-orange-500"></i>
+                                            Use staging environment
+                                        </span>
+                                    </label>
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 ml-6">
+                                        For testing (Let's Encrypt only)
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- DNS-01 Alias Mode -->
+                            <div class="mt-4">
+                                <label for="dns_alias_domain" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <i class="fas fa-random mr-1 text-blue-500"></i>
+                                    DNS-01 Alias Domain <span class="text-xs font-normal text-gray-500 dark:text-gray-400">(optional)</span>
+                                </label>
+                                <input type="text" id="dns_alias_domain" name="dns_alias_domain"
+                                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white text-sm"
+                                       placeholder="e.g. validation.example.org">
+                                <p id="dns_alias_help" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    Use DNS-01 Alias Mode when <code class="font-mono bg-gray-100 dark:bg-gray-600 px-1 rounded">_acme-challenge.yourdomain.com</code>
+                                    is CNAMEd to a validation zone you control. Enter the target FQDN (without the <code class="font-mono bg-gray-100 dark:bg-gray-600 px-1 rounded">_acme-challenge.</code> prefix).
+                                </p>
+                                <div class="mt-2 flex items-center gap-2">
+                                    <button type="button" id="check_dns_alias_button"
+                                            class="inline-flex items-center px-3 py-1.5 border border-blue-300 dark:border-blue-600 text-xs font-medium rounded-md text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50">
+                                        <i class="fas fa-search mr-1"></i>
+                                        Check DNS-01 Alias
+                                    </button>
+                                </div>
+                                <div id="dns_alias_check_result" class="mt-2 hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Button -->
+                    <div class="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                            <i class="fas fa-shield-alt mr-1 text-green-500"></i>
+                            Free SSL certificates with automatic renewal
+                        </div>
+                        <button type="submit" 
+                                class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-lg shadow-lg text-white bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transform transition-all duration-200 hover:scale-105">
+                            <i class="fas fa-magic mr-2"></i>
+                            Create Certificate
+                        </button>
+                    </div>
+                    
+                    <!-- Quick Info -->
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <i class="fas fa-lightbulb text-blue-500 mt-0.5 mr-3"></i>
+                            <div class="text-sm text-blue-800 dark:text-blue-300">
+                                <p class="font-medium">💡 Quick Tips:</p>
+                                <ul class="mt-1 space-y-1 text-xs">
+                                    <li>• Wildcard certificates work for unlimited subdomains</li>
+                                    <li>• DigiCert requires EAB credentials (configured in Settings)</li>
+                                    <li>• Private CAs are perfect for internal/corporate use</li>
+                                    <li>• Certificates auto-renew 30 days before expiry</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6" id="statsCards">
+            <!-- Stats will be populated here -->
+        </div>
+
+        <!-- Certificates List -->
+        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 rounded-t-lg">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-3 lg:space-y-0">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Your Certificates</h3>
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 lg:space-x-3">
+                        <div class="relative">
+                            <input type="text" id="certificateSearch" placeholder="Search certificates..."
+                                   class="pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm bg-white shadow-sm transition-shadow duration-200 w-full sm:w-48">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                            <div class="absolute inset-y-0 right-0 pr-2 hidden sm:flex items-center pointer-events-none">
+                                <kbd class="px-1.5 py-0.5 text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-600 rounded border border-gray-300 dark:border-gray-500">/</kbd>
+                            </div>
+                        </div>
+                        <select id="statusFilter" class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary bg-white shadow-sm transition-shadow duration-200">
+                            <option value="all">All Status</option>
+                            <option value="valid">Valid</option>
+                            <option value="expiring">Expiring Soon</option>
+                            <option value="expired">Expired</option>
+                        </select>
+                        <button onclick="checkAllDeploymentStatuses()" 
+                                class="inline-flex items-center px-3 py-2 border border-indigo-300 dark:border-indigo-600 shadow-sm text-sm font-medium rounded-lg text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200 whitespace-nowrap">
+                            <i class="fas fa-sync mr-1 sm:mr-2"></i>
+                            <span class="hidden sm:inline">Check All</span>
+                            <span class="sm:hidden">Check</span>
+                        </button>
+                        <button onclick="toggleDebugConsole()" 
+                                class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-lg text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200 whitespace-nowrap">
+                            <i class="fas fa-terminal mr-1 sm:mr-2"></i>
+                            <span class="hidden sm:inline">Debug</span>
+                            <span class="sm:hidden">Debug</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700" id="certificatesTable">
+                    <thead class="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200" onclick="sortCertificates('domain')">
+                                Domain <i class="fas fa-sort ml-1 text-gray-400" id="sort-icon-domain"></i>
+                            </th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200" onclick="sortCertificates('status')">
+                                Status <i class="fas fa-sort ml-1 text-gray-400" id="sort-icon-status"></i>
+                            </th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 hidden md:table-cell" onclick="sortCertificates('expiry')">
+                                Expires <i class="fas fa-sort ml-1 text-gray-400" id="sort-icon-expiry"></i>
+                            </th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">
+                                Provider
+                            </th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">
+                                Deployment
+                            </th>
+                            <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="certificatesList" class="divide-y divide-gray-200 dark:divide-gray-700">
+                        <!-- Certificates will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div><!-- /x-show server -->
+
+    <!-- CLIENT CERTIFICATES -->
+    <div x-show="certView === 'client'" x-cloak x-init="if (certView === 'client') initClientCerts()">
+        {% include 'partials/_client_certs.html' %}
+    </div>
+
+    </div><!-- /max-w-7xl Alpine scope -->
+
+    <!-- Certificate Detail Slide-out Panel -->
+    <div id="certDetailOverlay" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-40 hidden" onclick="closeCertDetail()"></div>
+    <div id="certDetailPanel" class="fixed top-0 right-0 h-full w-full sm:w-96 lg:w-[480px] bg-white dark:bg-gray-800 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="sticky top-0 bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-6 py-4 flex items-center justify-between z-10">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white truncate" id="detailDomain">Certificate Details</h3>
+            <button type="button" onclick="closeCertDetail()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1" title="Close panel">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+        <div id="certDetailContent" class="p-6">
+            <!-- Detail content loaded dynamically -->
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div id="loadingModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 m-4 max-w-md w-full">
+            <div class="text-center">
+                <div class="relative">
+                    <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 dark:border-gray-600 border-t-primary mx-auto"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <i class="fas fa-certificate text-primary text-lg"></i>
+                    </div>
+                </div>
+                <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white" id="loadingTitle">Processing Certificate...</h3>
+                <p class="mt-2 text-sm text-gray-600 dark:text-gray-300" id="loadingMessage">This may take a few minutes</p>
+                <div class="mt-4 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                    <div class="bg-primary h-2 rounded-full transition-all duration-1000" id="progressBar" style="width: 0%"></div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Do not close this window</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Curl Command Modal -->
+    <div id="curlModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 m-4 max-w-2xl w-full max-h-96 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-code mr-2"></i>
+                    Automation curl Command
+                </h3>
+                <button onclick="closeCurlModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Copy this command:</label>
+                    <div class="bg-gray-100 p-3 rounded-md font-mono text-sm">
+                        <code id="curlCommandText"></code>
+                    </div>
+                    <button onclick="copyFromModal()" class="mt-2 inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fas fa-copy mr-1"></i>
+                        Copy Command
+                    </button>
+                </div>
+                
+                <div class="text-sm text-gray-600">
+                    <p class="mb-2"><strong>Note:</strong> Replace <code>YOUR_API_TOKEN</code> with your actual API bearer token.</p>
+                    <p class="mb-2"><strong>Usage:</strong> This downloads a ZIP file containing cert.pem, chain.pem, fullchain.pem, and privkey.pem</p>
+                    <p><strong>Example extraction:</strong></p>
+                    <div class="bg-gray-100 p-2 rounded text-xs font-mono mt-1">
+                        <code>unzip domain.com-tls.zip -d /etc/ssl/certs/domain.com/</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div id="messages" class="fixed top-4 right-4 z-50"></div>
+
+    <!-- Debug Console -->
+    <div id="debugConsole" class="fixed bottom-4 left-4 right-4 bg-black text-green-400 font-mono text-xs rounded-lg shadow-lg border border-gray-600 hidden z-40">
+        <div class="flex items-center justify-between p-3 border-b border-gray-600">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-terminal text-green-400"></i>
+                <span class="text-white font-semibold">Deployment Check Debug Console</span>
+                <span class="text-gray-400 text-xs">| Cache: <span id="debug-cache-info">Loading...</span></span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="showCacheStats()" class="text-blue-400 hover:text-blue-300" title="Show cache stats">
+                    <i class="fas fa-database"></i>
+                </button>
+                <button onclick="invalidateAllCache()" class="text-orange-400 hover:text-orange-300" title="Clear cache">
+                    <i class="fas fa-trash"></i>
+                </button>
+                <button onclick="clearDebugConsole()" class="text-yellow-400 hover:text-yellow-300" title="Clear console">
+                    <i class="fas fa-eraser"></i>
+                </button>
+                <button onclick="toggleDebugConsole()" class="text-gray-400 hover:text-white" title="Close console">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div id="debugOutput" class="p-3 max-h-64 overflow-y-auto">
+            <div class="text-gray-500">Debug console ready. Click "Check All" to see deployment check logs...</div>
+        </div>
+    </div>
+
+    <script src="/static/js/client-certs.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+{% endblock %}

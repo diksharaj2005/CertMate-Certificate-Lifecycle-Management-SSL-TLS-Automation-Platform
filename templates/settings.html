@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% block title %}Settings - CertMate{% endblock %}
+{% block content %}
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8"
+         x-data="{ tab: (location.hash.slice(1) || 'dns') }"
+         x-init="$watch('tab', t => history.replaceState(null, '', '#' + t))"
+        <!-- Header -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
+            <div class="px-6 py-4">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Settings</h2>
+                <p class="text-gray-600 dark:text-gray-300 mt-1">Configure your DNS provider credentials and preferences</p>
+                <div class="mt-3 flex items-center text-sm">
+                    <div class="flex items-center text-green-600 dark:text-green-400" id="connectionStatus" style="display: none;">
+                        <i class="fas fa-check-circle mr-1"></i>
+                        <span>Connected and configured</span>
+                    </div>
+                    <div class="flex items-center text-yellow-600 dark:text-yellow-400" id="partialStatus" style="display: none;">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        <span>Partially configured</span>
+                    </div>
+                    <div class="flex items-center text-red-600 dark:text-red-400" id="disconnectedStatus" style="display: none;">
+                        <i class="fas fa-times-circle mr-1"></i>
+                        <span>Not configured</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tabs (Alpine.js) -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+            <div class="px-6 py-3 border-b dark:border-gray-700 overflow-x-auto">
+                <nav class="flex space-x-1 min-w-max" role="tablist">
+                    <template x-for="t in [{id:'dns',icon:'fa-server',label:'DNS'},{id:'ca',icon:'fa-shield-alt',label:'CA'},{id:'general',icon:'fa-cogs',label:'General'},{id:'storage',icon:'fa-database',label:'Storage'},{id:'notifications',icon:'fa-bell',label:'Notifications'},{id:'deploy',icon:'fa-rocket',label:'Deploy'},{id:'users',icon:'fa-users',label:'Users'},{id:'apikeys',icon:'fa-key',label:'API Keys'},{id:'backup',icon:'fa-archive',label:'Backup'}]">
+                        <button type="button" @click="tab = t.id" role="tab"
+                                :class="tab === t.id
+                                    ? 'px-4 py-2 text-sm font-medium rounded-md text-primary bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700'
+                                    : 'px-4 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'">
+                            <i class="fas" :class="t.icon" class="mr-1"></i><span class="hidden sm:inline" x-text="' ' + t.label"></span>
+                        </button>
+                    </template>
+                </nav>
+            </div>
+            <div class="px-6 py-6">
+                <form id="settingsForm" class="space-y-8">
+
+                    {% include 'partials/settings_dns.html' %}
+                    {% include 'partials/settings_ca.html' %}
+                    {% include 'partials/settings_general.html' %}
+                    {% include 'partials/settings_storage.html' %}
+                    </form>
+            </div>
+        </div>
+
+        {% include 'partials/settings_notifications.html' %}
+                    {% include 'partials/settings_deploy.html' %}
+                    {% include 'partials/settings_users.html' %}
+                    {% include 'partials/settings_apikeys.html' %}
+                    <!-- TAB: Backup & Restore Section -->
+        <div x-show="tab === 'backup'" x-cloak class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mt-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                    <i class="fas fa-database mr-2 text-blue-500"></i>
+                    Backup & Restore
+                </h3>
+                <span class="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-2 py-1 rounded-full">
+                    Data Protection
+                </span>
+            </div>
+            
+            <p class="text-gray-600 dark:text-gray-400 text-sm mb-6">
+                Create backups of your settings and certificates to prevent data loss. Restore from previous backups when needed.
+            </p>
+
+            <!-- Create Backup Section -->
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 dark:text-white mb-3 flex items-center">
+                        <i class="fas fa-plus-circle mr-2 text-green-500"></i>
+                        Create Backup
+                    </h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Create atomic backups that include both settings and certificates to ensure data consistency.
+                    </p>
+                    <div class="space-y-3">
+                        <button type="button" onclick="createBackup('unified', this)" 
+                                class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors text-sm">
+                            <i class="fas fa-archive mr-2"></i>
+                            Create Unified Backup (Recommended)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 dark:text-white mb-3 flex items-center">
+                        <i class="fas fa-info-circle mr-2 text-blue-500"></i>
+                        Backup Information
+                    </h4>
+                    <div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                        <div class="flex items-start">
+                            <i class="fas fa-check text-green-500 mr-2 mt-0.5 text-xs"></i>
+                            <span><strong>Unified Backup:</strong> Atomic backup of both settings and certificates ensuring data consistency and preventing configuration mismatches</span>
+                        </div>
+                        <div class="flex items-start mt-3 pt-2 border-t border-gray-200 dark:border-gray-600">
+                            <i class="fas fa-shield-alt text-yellow-500 mr-2 mt-0.5 text-xs"></i>
+                            <span class="text-xs">Backups contain sensitive data. Keep them secure and stored safely.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Existing Backups Section -->
+            <div class="border-t border-gray-200 dark:border-gray-600 pt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="font-medium text-gray-900 dark:text-white flex items-center">
+                        <i class="fas fa-history mr-2 text-orange-500"></i>
+                        Existing Backups
+                    </h4>
+                    <button type="button" onclick="refreshBackupList()" 
+                            class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
+                        <i class="fas fa-sync-alt mr-1"></i>
+                        Refresh
+                    </button>
+                </div>
+
+                <!-- Backup Lists -->
+                <div class="space-y-6">
+                    <!-- Unified Backups (Recommended) -->
+                    <div>
+                        <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                            <i class="fas fa-archive mr-1 text-green-500"></i>
+                            Unified Backups (Recommended)
+                            <span class="text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-1 rounded-full ml-2">Atomic</span>
+                        </h5>
+                        <div id="unified-backup-list" class="space-y-2 max-h-64 overflow-y-auto">
+                            <div class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                                Loading unified backups...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="statusMessage" class="mt-4 hidden"></div>
+    </div>
+
+    <!-- Add Account Modal -->
+    <div id="addAccountModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white" id="modal-title">
+                        Add Account
+                    </h3>
+                    <button type="button" onclick="closeAddAccountModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="addAccountForm" class="space-y-4">
+                    <div>
+                        <label for="account-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Account Name *
+                        </label>
+                        <input type="text" id="account-name" name="name" required
+                               class="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+                               placeholder="e.g., Production, Development, Client-A">
+                    </div>
+                    
+                    <div>
+                        <label for="account-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Description (optional)
+                        </label>
+                        <input type="text" id="account-description" name="description"
+                               class="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+                               placeholder="Brief description of this account">
+                    </div>
+                    
+                    <!-- Dynamic fields will be populated here based on provider -->
+                    <div id="modal-provider-fields"></div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" id="set-as-default" name="set_as_default" 
+                               class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                        <label for="set-as-default" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                            Set as default account
+                        </label>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeAddAccountModal()" 
+                                class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                            Cancel
+                        </button>
+                        <button type="button" onclick="saveAccount()" 
+                                class="px-4 py-2 bg-primary text-white rounded-md hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                            Add Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Account Modal -->
+    <div id="editAccountModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                        Edit Account
+                    </h3>
+                    <button type="button" onclick="closeEditAccountModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="editAccountForm" class="space-y-4">
+                    <input type="hidden" id="edit-account-id" name="edit-account-id">
+                    <input type="hidden" id="edit-provider-name" name="edit-provider-name">
+                    
+                    <div>
+                        <label for="edit-account-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Account Name *
+                        </label>
+                        <input type="text" id="edit-account-name" name="name" required
+                               class="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary">
+                    </div>
+                    
+                    <div>
+                        <label for="edit-account-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Description (optional)
+                        </label>
+                        <input type="text" id="edit-account-description" name="description"
+                               class="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary">
+                    </div>
+                    
+                    <!-- Dynamic fields will be populated here based on provider -->
+                    <div id="edit-modal-provider-fields"></div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" id="edit-set-as-default" name="set_as_default" 
+                               class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                        <label for="edit-set-as-default" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                            Set as default account
+                        </label>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeEditAccountModal()" 
+                                class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                            Cancel
+                        </button>
+                        <button type="button" onclick="saveEditAccount()" 
+                                class="px-4 py-2 bg-primary text-white rounded-md hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                            Update Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debug Console -->
+    <div id="settingsDebugConsole" class="fixed bottom-4 left-4 right-4 bg-black text-green-400 font-mono text-xs rounded-lg shadow-lg border border-gray-600 hidden z-40">
+        <div class="flex justify-between items-center px-3 py-2 border-b border-gray-700">
+            <span class="text-white font-semibold">Settings Debug Console</span>
+            <button onclick="clearDebugConsole()" class="text-yellow-400 hover:text-yellow-300" title="Clear console">
+                <i class="fas fa-eraser"></i>
+            </button>
+            <button onclick="toggleDebugConsole()" class="text-gray-400 hover:text-white ml-2" title="Close console">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="settingsDebugOutput" class="p-3 max-h-64 overflow-y-auto">
+            <div class="text-gray-500">Debug console ready. All settings actions will be logged here...</div>
+        </div>
+    </div>
+    <button onclick="toggleDebugConsole()" class="fixed bottom-4 right-4 bg-gray-800 text-white px-3 py-2 rounded-full shadow-lg z-50 hover:bg-primary">
+        <i class="fas fa-bug"></i> Debug
+    </button>
+    <script src="/static/js/settings.js"></script>
+    <script src="/static/js/settings-notifications.js"></script>
+    <script src="/static/js/settings-deploy.js"></script>
+    <script src="/static/js/settings-apikeys.js"></script>
+{% endblock %}
