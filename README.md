@@ -192,7 +192,7 @@ Get CertMate running in under 5 minutes with Docker Compose:
 
 ```bash
 # Clone the repository
-git clone https://github.com/MeAkash77/CertMate-Certificate-Lifecycle-Management-SSL-TLS-Automation-Platform
+git clone https://github.com/diksharaj2005/CertMate-Certificate-Lifecycle-Management-SSL-TLS-Automation-Platform.git
 cd certmate
 
 # Copy environment template
@@ -290,7 +290,7 @@ Perfect for production deployments with isolation and easy scaling. **Supports m
 
 ```bash
 # Quick start with Docker Compose
-git clone https://github.com/MeAkash77/CertMate-Certificate-Lifecycle-Management-SSL-TLS-Automation-Platform
+git clone https://github.com/diksharaj2005/CertMate-Certificate-Lifecycle-Management-SSL-TLS-Automation-Platform.git
 cd certmate
 cp .env.example .env
 # Edit .env with your configuration
@@ -320,7 +320,7 @@ python3 -m venv certmate-env
 source certmate-env/bin/activate # On Windows: certmate-env\Scripts\activate
 
 # Install dependencies
-git clone https://github.com/MeAkash77/CertMate-Certificate-Lifecycle-Management-SSL-TLS-Automation-Platform
+git clone https://github.com/diksharaj2005/CertMate-Certificate-Lifecycle-Management-SSL-TLS-Automation-Platform.git
 cd certmate
 pip install -r requirements.txt
 
@@ -380,7 +380,7 @@ sudo apt update
 sudo apt install python3 python3-pip python3-venv certbot openssl
 
 # Clone and install
-git clone https://github.com/MeAkash77/CertMate-Certificate-Lifecycle-Management-SSL-TLS-Automation-Platform
+git clone https://github.com/diksharaj2005/CertMate-Certificate-Lifecycle-Management-SSL-TLS-Automation-Platform.git
 sudo mv certmate /opt/
 cd /opt/certmate
 sudo pip3 install -r requirements.txt
@@ -421,7 +421,7 @@ Set up the application in `/opt/certmate`:
 
 ```bash
 # If not already done, clone the repository
-git clone https://github.com/MeAkash77/CertMate-Certificate-Lifecycle-Management-SSL-TLS-Automation-Platform
+git clone https://github.com/diksharaj2005/CertMate-Certificate-Lifecycle-Management-SSL-TLS-Automation-Platform.git
 sudo mv certmate /opt/
 cd /opt/certmate
 
@@ -2309,9 +2309,9 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 <div align="center">
 
-**Made with ❤️ by Akash**
+**Made with ❤️ by Diksha**
 
-[Star us on GitHub](https://github.com/MeAkash77) • [Report Bug](https://github.com/MeAkash77)) • [Request Feature](https://github.com/MeAkash77)
+[Star us on GitHub](https://github.com/diksharaj2005) • [Report Bug](https://github.com/diksharaj2005)) • [Request Feature](https://github.com/diksharaj2005)
 
 <br>
 
